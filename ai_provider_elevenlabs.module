@@ -1,0 +1,81 @@
+<?php
+
+/**
+ * @file
+ * Provides ElevenLabs integration for the AI module.
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function ai_provider_elevenlabs_autoload_info() {
+  return [
+    'AIElevenLabsAdapter' => 'includes/AIElevenLabsAdapter.php',
+  ];
+}
+
+/**
+ * Implements hook_ai_provider_info().
+ */
+function ai_provider_elevenlabs_ai_provider_info() {
+  return [
+    'elevenlabs' => [
+      'label' => t('ElevenLabs'),
+      'description' => t('Use ElevenLabs for text-to-speech and speech-to-text audio workflows.'),
+      'class' => 'AIElevenLabsAdapter',
+      'website' => 'https://elevenlabs.io/',
+      'key_url' => 'https://elevenlabs.io/app/settings/api-keys',
+      'models_url' => 'https://elevenlabs.io/docs/overview/models',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_ai_provider_settings_alter().
+ */
+function ai_provider_elevenlabs_ai_provider_settings_alter(&$settings, $context) {
+  if ($context['provider'] !== 'elevenlabs') {
+    return;
+  }
+
+  $available_keys = function_exists('key_get_key_names_as_options')
+    ? key_get_key_names_as_options()
+    : [];
+
+  $providers_root = config_get('ai.settings', 'providers') ?: [];
+  $provider_config = !empty($providers_root['elevenlabs']) && is_array($providers_root['elevenlabs'])
+    ? $providers_root['elevenlabs']
+    : [];
+
+  $settings['api_key_elevenlabs'] = [
+    '#type' => 'key_select',
+    '#title' => t('ElevenLabs API Key'),
+    '#default_value' => !empty($provider_config['api_key']) ? $provider_config['api_key'] : '',
+    '#options' => $available_keys,
+    '#key_filters' => ['type' => 'authentication'],
+    '#description' => t('Select the ElevenLabs API key stored in the Key module.'),
+    '#required' => TRUE,
+    '#weight' => -10,
+  ];
+
+  $settings['elevenlabs_default_voice_id'] = [
+    '#type' => 'textfield',
+    '#title' => t('Default ElevenLabs Voice ID'),
+    '#default_value' => !empty($provider_config['elevenlabs_default_voice_id']) ? $provider_config['elevenlabs_default_voice_id'] : '',
+    '#description' => t('Used when a caller does not provide an ElevenLabs-specific voice ID. <strong>Free accounts are restricted to premade voices only.</strong> Premade voice IDs: Rachel — <code>21m00Tcm4TlvDq8ikWAM</code>, Adam — <code>pNInz6obpgDQGcFmaJgB</code>, Antoni — <code>ErXwobaYiN019PkySvjV</code>, Bella — <code>EXAVITQu4vr4xnSDxMaL</code>, Domi — <code>AZnzlk1XvdvUeBnXmlld</code>, Elli — <code>MF3mGyEYCl7XYWbV9V6O</code>, Josh — <code>TxGEqnHWrfWFTfGW9XjX</code>, Sam — <code>yoZ06aMxZJJ28mfd3POQ</code>. Paid accounts can use any voice ID from the <a href="https://elevenlabs.io/app/voice-library" target="_blank">ElevenLabs voice library</a>.'),
+    '#weight' => -9,
+  ];
+
+  $settings['elevenlabs_help'] = [
+    '#type' => 'markup',
+    '#markup' => '<div class="description">' .
+      t('<p><strong>ElevenLabs audio support</strong></p>
+      <ul>
+        <li>Text-to-speech models are discovered from the ElevenLabs models API.</li>
+        <li>Speech-to-text is exposed through ElevenLabs Scribe models.</li>
+        <li>The shared TTS form supports a custom voice ID field for ElevenLabs voices.</li>
+      </ul>') .
+      '</div>',
+    '#weight' => -8,
+  ];
+}
