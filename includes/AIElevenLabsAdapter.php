@@ -339,7 +339,15 @@ class AIElevenLabsAdapter extends AIAdapterBase {
       return $cache->data;
     }
 
-    $data = $this->requestJson('/models');
+    // Degrade to an empty list when the API is unreachable so model pickers
+    // and admin pages render instead of bubbling the exception.
+    try {
+      $data = $this->requestJson('/models');
+    }
+    catch (\Exception $e) {
+      watchdog('ai_provider_elevenlabs', 'Failed to fetch ElevenLabs models: @error', ['@error' => $e->getMessage()], WATCHDOG_WARNING);
+      return [];
+    }
     $models = is_array($data) ? $data : [];
     cache_set('ai_provider_elevenlabs_models', $models, 'cache', REQUEST_TIME + 3600);
     return $models;
