@@ -82,9 +82,8 @@ class AIElevenLabsAdapter extends AIAdapterBase {
    * Get models by capability.
    */
   public function getModelsByCapability($capability): array {
-    $capability = strtolower((string) $capability);
+    $capability = ai_normalize_capability_name($capability);
     $filtered = [];
-    $provider_id = 'elevenlabs';
 
     switch ($capability) {
       case 'tts':
@@ -103,7 +102,6 @@ class AIElevenLabsAdapter extends AIAdapterBase {
 
       case 'stt':
       case 'speech_to_text':
-      case 'audio':
         $filtered = $this->getSpeechToTextModels();
         break;
 
@@ -113,7 +111,7 @@ class AIElevenLabsAdapter extends AIAdapterBase {
             continue;
           }
           $id = !empty($model['model_id']) ? (string) $model['model_id'] : '';
-          if ($id === '') {
+          if ($id === '' || in_array($id, $this->deprecatedModels, TRUE)) {
             continue;
           }
           $filtered[$id] = !empty($model['name']) ? (string) $model['name'] : $id;
@@ -121,7 +119,7 @@ class AIElevenLabsAdapter extends AIAdapterBase {
         break;
     }
 
-    backdrop_alter('ai_model_capabilities', $filtered, $capability, $provider_id);
+    backdrop_alter('ai_model_capabilities', $filtered, $capability, $this);
     asort($filtered);
     return $filtered;
   }
@@ -334,7 +332,8 @@ class AIElevenLabsAdapter extends AIAdapterBase {
    * Fetch model metadata from ElevenLabs.
    */
   protected function getModelData(): array {
-    $cache = cache_get('ai_provider_elevenlabs_models');
+    $cache_key = ai_models_cache_key('elevenlabs', 'model_metadata', [hash('sha256', $this->apiKey)]);
+    $cache = cache_get($cache_key);
     if (!empty($cache->data) && is_array($cache->data)) {
       return $cache->data;
     }
@@ -349,7 +348,7 @@ class AIElevenLabsAdapter extends AIAdapterBase {
       return [];
     }
     $models = is_array($data) ? $data : [];
-    cache_set('ai_provider_elevenlabs_models', $models, 'cache', REQUEST_TIME + 3600);
+    cache_set($cache_key, $models, 'cache', REQUEST_TIME + 3600);
     return $models;
   }
 
