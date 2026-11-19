@@ -1,10 +1,12 @@
 # AI Provider ElevenLabs
 
-ElevenLabs text-to-speech provider for the Backdrop CMS AI module.
+Turn written text into spoken audio or transcribe recordings in Backdrop with ElevenLabs. Set a default voice or choose a voice for an individual request.
 
 ## Installation
 
-- Install this module using the official [Backdrop CMS instructions](https://backdropcms.org/user-guide/modules).
+Install and enable this module with AI and Key. [Backdrop module installation guide](https://backdropcms.org/user-guide/modules)
+
+Store your service credentials using the Key module. Choose the provider in **Configuration → AI → Settings → Providers**. [Setup and troubleshooting](https://github.com/backdrop-contrib/ai_provider_elevenlabs/wiki)
 
 ## Issues
 
